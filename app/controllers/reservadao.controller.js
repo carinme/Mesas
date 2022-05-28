@@ -1,153 +1,167 @@
-const { Cliente } = require("../models");
 const db = require("../models");
-const Mesa = db.Mesa;
-const Reserva = db.Reserva;
-const mesaDAO = require("../controllers/mesaDAO.controller.js");
-const clienteDAO = require("../controllers/clienteDAO.controller.js");
-
+const Reservas = db.Reservas;
+const Mesas = db.Mesas;
+const Clientes = db.Clientes;
 const Op = db.Sequelize.Op;
-
-
-exports.create = async function(req, res){
-
-    var idMesa = await VerificarMesa(req.body.rango_hora_inicio, req.body.rango_hora_fin, req.body.idRestaurante,req.body.fecha, req.body.cantidad);
-
-    //guardamos datos de la reserva con el id de la mesa selecciono el cliente
+exports.create = (req, res) => {
+    // Validate request
+    if (!req.body.restaurante_id || !req.body.cliente_id || !req.body.mesa_id || !req.body.fecha || !req.body.hora_inicio || !req.body.hora_fin || !req.body.cantidad) {
+        res.status(400).send({
+            message: "Datos incompletos"
+        });
+        return;
+    }
+    // crea una venta
     const reserva = {
-        cantidad: req.body.cantidad,
-        rango_hora_inicio: req.body.rango_hora_inicio,
-        rango_hora_fin: req.body.rango_hora_fin,
+        restaurante_id: req.body.restaurante_id,
+        cliente_id: req.body.cliente_id,
+        mesa_id: req.body.mesa_id,
         fecha: req.body.fecha,
-        mesaIDIdMesa: idMesa,
-        clienteIDIdCliente: req.body.clienteID,
+        hora_inicio: req.body.hora_inicio,
+        hora_fin: req.body.hora_fin,
+        cantidad: req.body.cantidad,
     };
-    Reserva.create(reserva)
+    // Guardamos a la base de datos
+    Reservas.create(reserva)
         .then(data => {
             res.send(data);
         })
         .catch(err => {
             res.status(500).send({
-            message:
-            err.message || "Ha ocurrido un error al crear la reserva."
+                message:
+                    err.message || "Ha ocurrido un error al crear una reserva."
+            });
         });
-    });
 };
 
 exports.findOne = (req, res) => {
-        const id = req.params.id;
-        Reserva.findByPk(id)
+    const id = req.params.id;
+    Reservas.findByPk(id)
         .then(data => {
             res.send(data);
         })
         .catch(err => {
-        res.status(500).send({
-            message: "Error al obtener la reserva con id=" + id
+            res.status(500).send({
+                message: "Error al obtener reserva con id=" + id
+            });
         });
-        });
-
-    };
-
-
-exports.findAll = (req, res) => {
-        const nombre_res = req.query.nombre;
-        var condition = nombre_res ? { id_Reserva : { [Op.iLike]: `%${nombre_res}%` } } : null;
-        Reserva.findAll({ where: condition })
-        .then(data => {
-            res.send(data);
-        })
-
-        .catch(err => {
-
-        res.status(500).send({
-
-        message:
-
-        err.message || "Ocurrio un error al obtener las reservas."
-
-        });
-
-        });
-
 };
 
-exports.getReservas = async function(req, res){
-    var reservas_solicitadas = await obtenerReservas(req.body.id_Restaurante, req.body.cedula, req.body.fecha);
-    res.send(reservas_solicitadas);
-};
-
-async function obtenerReservas(idrestaurante,cedulacliente,fecha){
-    var mesas = await mesaDAO.GetMesas(idrestaurante);
-    var reservas_solicitadas = [];
-    if( cedulacliente == 0 ){
-         for (var mesa in mesas){
-            var reserva = await Reserva.findAll({
-                      where: {
-                        mesaIDIdMesa: mesas[mesa].id_Mesa,
-                        fecha: fecha,
-
-                      },
-                         order:[
-                              ['rango_hora_inicio','ASC'],
-                        ],
-                    });
-            //si no hay reservas para esa mesa con los requisitos, enviar return id mesa para reservarlo
-            if(reserva.length!= 0){
-                reservas_solicitadas.push(reserva);
-            }
-         }
-         return reservas_solicitadas;
-    }else{
-        var idcliente = await clienteDAO.getClienteID(cedulacliente);
-        if( idcliente !=0 ){
-            for (var mesa in mesas){
-                var reserva = await Reserva.findAll({
-                          where: {
-                            mesaIDIdMesa: mesas[mesa].id_Mesa,
-                            fecha: fecha,
-                            clienteIDIdCliente: idcliente,
-                          },
-                          order:[
-                              ['rango_hora_inicio','ASC'],
-                          ],
-                        });
-                //si no hay reservas para esa mesa con los requisitos, enviar return id mesa para reservarlo
-                if(reserva.length!= 0){
-                    reservas_solicitadas.push(reserva);
+exports.findMesasLibres = (req, res) => {
+    const restaurante_id = req.params.restaurante_id;
+    const fecha = req.params.fecha;
+    const hora_inicio = req.params.hora_inicio;
+    const hora_fin = req.params.hora_fin;
+    var arr = [];
+    Reservas.findAll({
+        where: {
+            [Op.and]:
+                [{ restaurante_id: restaurante_id },
+                { fecha: fecha },
+                {
+                    hora_inicio:
+                    {
+                        [Op.lte]: hora_fin
+                    }
+                },
+                {
+                    hora_fin:
+                    {
+                        [Op.gte]: hora_inicio
+                    }
+                }]
+        }
+    }).then(data => {
+        if (data.length === 0) {
+            return Mesas.findAll({
+                where: {
+                    restaurante_id: restaurante_id
                 }
-            }
-            return reservas_solicitadas;
-
-        }else{
-            return reservas_solicitadas;
-        }
-    }
-};
-
-async function VerificarMesa(inicio, fin, idrestaurante,fecha,cantidad){
-    //se obtiene las mesas de ese restaurante que cumplan con la capacidad sugerida
-    var mesas = await mesaDAO.GetMesas(idrestaurante);
-    var id = 0;
-    //se recorre las mesas de ese restaurante para saber si esta ocupado o no para esa hora.
-    for (var mesa in mesas){
-        var reserva = await Reserva.findAll({
-                  where: {
-                    mesaIDIdMesa: mesas[mesa].id_Mesa,
-                    fecha: fecha,
-                    [Op.or]: [
-                      { rango_hora_inicio: {[Op.between]:[inicio,fin]} },
-                      { rango_hora_fin: {[Op.between]:[inicio,fin]} },
-
+            })
+        } else {
+            return Mesas.findAll({
+                where: {
+                    [Op.and]: [
+                        { restaurante_id: restaurante_id },
+                        {
+                            [Op.not]: [
+                                { id: data.map(d => d.mesa_id) }
+                            ]
+                        }
                     ]
-                  }
-                });
-        //si no hay reservas para esa mesa con los requisitos, enviar return id mesa para reservarlo
-        if(reserva.length== 0){
-            id =  mesas[mesa].id_Mesa;
-            break;
+                }
+            })
         }
-    }
-    return id;
+    })
+        .then(data => {
+            res.status(200).send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: "Error al obtener mesas " + err
+            });
+        });
 };
 
-module.exports.VerificarMesa = VerificarMesa;
-module.exports.obtenerReservas = obtenerReservas;
+exports.getReservas = (req, res) => {
+    const restaurante_id = req.params.restaurante_id;
+    const fecha = req.params.fecha;
+    const cliente_id = req.params.cliente_id;
+
+    Reservas.belongsTo(Mesas, { foreignKey: "mesa_id" });
+    Reservas.belongsTo(Clientes, { foreignKey: "cliente_id" });
+    if (cliente_id !== undefined) {
+        Reservas.findAll({
+            where: {
+                [Op.and]:
+                    [{ restaurante_id: restaurante_id },
+                    { fecha: fecha },
+                    { cliente_id: cliente_id },
+                    ]
+            },
+            order: [
+                [Mesas, "nombre", "ASC"],
+                ["hora_inicio", "ASC"]
+            ],
+            include: [{
+                model: Mesas,
+                as: "Mesa"
+            },
+            {
+                model: Clientes,
+                as: "Cliente"
+            }]
+        }).catch(err => {
+            res.status(500).send({
+                message: "Error al obtener mesas " + err
+            });
+        }).then(data => { res.status(200).send(data); });
+    }
+    else {
+        Reservas.findAll({
+            where: {
+                [Op.and]:
+                    [{ restaurante_id: restaurante_id },
+                    { fecha: fecha },
+                    ]
+            },
+            order: [
+                [Mesas, "nombre", "ASC"],
+                ["hora_inicio", "ASC"]
+            ],
+            include: [{
+                model: Mesas,
+                as: "Mesa"
+            },
+            {
+                model: Clientes,
+                as: "Cliente"
+            }]
+        }).then(data => { res.status(200).send(data); })
+            .catch(err => {
+                res.status(500).send({
+                    message: "Error al obtener mesas " + err
+                });
+            });
+    }
+};
