@@ -1,11 +1,21 @@
 const db = require("../models");
 const Mesas = db.Mesas;
 const Op = db.Sequelize.Op;
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
+
+    console.log(req.body);
     // Validate request
-    if (!req.body.nombre || !req.body.restaurante_id || !req.body.posicion || !req.body.capacidad) {
+    if (!req.body.hasOwnProperty('nombre') || !req.body.hasOwnProperty('restaurante_id') || !req.body.hasOwnProperty('posicion_x') || !req.body.hasOwnProperty('posicion_y')  || !req.body.hasOwnProperty('capacidad')) {
         res.status(400).send({
-            message: "Datos incompletos"
+            message: ["Datos incompletos"]
+        });
+        return;
+    }
+
+    //if find a coincidence send a error
+    if((await findRestaurantePos(req, res)).length > 0){
+        res.status(409).send({
+            message: ["Espacio ya ocupado"]
         });
         return;
     }
@@ -13,9 +23,11 @@ exports.create = (req, res) => {
     const mesa = {
         nombre: req.body.nombre,
         restaurante_id: req.body.restaurante_id,
-        posicion: req.body.posicion,
+        posicion_x: req.body.posicion_x,
+        posicion_y: req.body.posicion_y,
         planta: req.body.planta,
-        capacidad: req.body.capacidad
+        capacidad: req.body.capacidad,
+        estado: req.body.estado
     };
     // Guardamos a la base de datos
     Mesas.create(mesa)
@@ -23,9 +35,17 @@ exports.create = (req, res) => {
             res.send(data);
         })
         .catch(err => {
-            res.status(500).send({
+            console.log(err.message);
+
+            // if is a validation error
+            if (err.name === 'SequelizeValidationError') {
+                return res.status(400).json({
+                    message: err.errors.map(e => e.message)
+                })
+            } //other errors
+            else res.status(500).send({
                 message:
-                    err.message || "Ha ocurrido un error al crear una mesa."
+                    ["Ha ocurrido un error al crear una mesa."]
             });
         });
 };
@@ -60,6 +80,23 @@ exports.findRestaurante = (req, res) => {
             });
         });
 };
+
+// Search someone coincidence
+function findRestaurantePos(req, res){
+
+    const restaurante_id = req.body.restaurante_id;
+    const restaurante_pos_x = req.body.posicion_x;
+    const restaurante_pos_y = req.body.posicion_y;
+    return Mesas.findAll({ where:
+            {
+                restaurante_id: restaurante_id,
+                posicion_x: restaurante_pos_x,
+                posicion_y: restaurante_pos_y,
+            }})
+        .catch(err => {
+            console.log(err.message);
+        });
+}
 
 exports.findAll = (req, res) => {
     var condition = null;
