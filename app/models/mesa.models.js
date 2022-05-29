@@ -42,7 +42,7 @@ module.exports = (sequelize, Sequelize) => {
             validate: {
                 min: {
                     args: 1,
-                    msg: "La capacidad debe ser mayor a 0"
+                    msg: "La planta debe ser mayor a 0"
                 },
                 isInt: true,
             },
