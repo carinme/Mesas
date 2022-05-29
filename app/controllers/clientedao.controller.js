@@ -21,9 +21,15 @@ exports.create = (req, res) => {
             res.send(data);
         })
         .catch(err => {
-            res.status(500).send({
+            console.log(err);
+            if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+                return res.status(400).json({
+                    message: err.errors.map(e => e.message)
+                })
+            } //other errors
+            else res.status(500).send({
                 message:
-                    err.message || "Ha ocurrido un error al crear el cliente."
+                    ["Ha ocurrido un error al crear el cliente."]
             });
         });
 };
