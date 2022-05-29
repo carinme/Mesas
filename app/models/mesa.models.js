@@ -12,8 +12,25 @@ module.exports = (sequelize, Sequelize) => {
                 deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
             }
         },
-        posicion: {
-            type: Sequelize.STRING
+        posicion_x: {
+            type: Sequelize.INTEGER,
+            validate: {
+                min: {
+                    args: 1,
+                    msg: "El eje x debe de ser mayor a 1"
+                },
+                isInt: true,
+            }
+        },
+        posicion_y: {
+            type: Sequelize.INTEGER,
+            validate: {
+                min: {
+                    args: 1,
+                    msg: "El eje y debe de ser mayor a 1"
+                },
+                isInt: true,
+            }
         },
         id: {
             type: Sequelize.BIGINT,
@@ -22,14 +39,29 @@ module.exports = (sequelize, Sequelize) => {
         },
         planta: {
             type: Sequelize.INTEGER,
+            validate: {
+                min: {
+                    args: 1,
+                    msg: "La capacidad debe ser mayor a 0"
+                },
+                isInt: true,
+            },
             defaultValue: 1
         },
         capacidad: {
-            type: Sequelize.INTEGER
+            type: Sequelize.INTEGER,
+            validate: {
+                min: {
+                    args: 1,
+                    msg: "La capacidad debe ser mayor a 0"
+                },
+                isInt: true,
+            }
         },
         estado: {
             type: Sequelize.STRING,
-            defaultValue: "Abierto"
+            defaultValue: "abierto",
+            isIn: [['abierto', 'cerrado']]
         }
     });
     
