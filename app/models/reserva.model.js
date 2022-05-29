@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const Mesa = require("./mesa.model.js")(sequelize, Sequelize);
+    const Mesa = require("./mesa.models.js")(sequelize, Sequelize);
     const Restaurante = require("./restaurante.model.js")(sequelize, Sequelize);
     const Cliente = require("./cliente.model.js")(sequelize, Sequelize);
     const Reserva = sequelize.define("Reserva", {
@@ -27,20 +27,11 @@ module.exports = (sequelize, Sequelize) => {
                 deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
             }
         },
-        fecha: {
-            type: Sequelize.DATEONLY
-        },
         id: {
             type: Sequelize.BIGINT,
             primaryKey: true,
             autoIncrement: true
-        },
-        hora_inicio: {
-            type: Sequelize.INTEGER,
-        },
-        hora_fin: {
-            type: Sequelize.INTEGER,
-        },
+        },  type: Sequelize.INTEGER,
         cantidad: {
             type: Sequelize.INTEGER
         }
