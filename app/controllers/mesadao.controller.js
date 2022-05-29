@@ -58,7 +58,7 @@ exports.findOne = (req, res) => {
         })
         .catch(err => {
             res.status(500).send({
-                message: "Error al obtener mesa con id=" + id
+                message: ["Error al obtener mesa con id=" + id]
             });
         });
 };
@@ -76,7 +76,7 @@ exports.findRestaurante = (req, res) => {
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Ocurrio un error al obtener las mesas."
+                    ["Ocurrio un error al obtener las mesas."]
             });
         });
 };
@@ -98,6 +98,24 @@ function findRestaurantePos(req, res){
         });
 }
 
+// Search someone coincidence different of actual
+function findRestaurantePosUpdate(req, id){
+
+    const restaurante_id = req.body.restaurante_id;
+    const restaurante_pos_x = req.body.posicion_x;
+    const restaurante_pos_y = req.body.posicion_y;
+    return Mesas.findAll({ where:
+            {
+                id: {[Op.ne]: id},
+                restaurante_id: restaurante_id,
+                posicion_x: restaurante_pos_x,
+                posicion_y: restaurante_pos_y,
+            }})
+        .catch(err => {
+            console.log(err.message);
+        });
+}
+
 exports.findAll = (req, res) => {
     var condition = null;
 
@@ -108,7 +126,7 @@ exports.findAll = (req, res) => {
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Ocurrio un error al obtener las mesas."
+                    ["Ocurrio un error al obtener las mesas."]
             });
         });
 };
@@ -124,30 +142,50 @@ exports.delete = (req,res) => {
     })
     .catch(err => {
         res.status(500).send({
-            message: "Error al eliminar mesa con id=" + id
+            message: ["Error al eliminar mesa con id=" + id]
         });
     });   
 };
 
-exports.update = (req,res) => {
-    const id = req.params.id;
+exports.update = async (req, res) => {
+    const id = parseInt(req.params.id);
+    //if find a coincidence send a error
+    if ((await findRestaurantePosUpdate(req, id)).length > 0) {
+        res.status(409).send({
+            message: ["Espacio ya ocupado"]
+        });
+        return;
+    }
     const mesa = {
         nombre: req.body.nombre,
         restaurante_id: req.body.restaurante_id,
-        posicion: req.body.posicion,
+        posicion_x: req.body.posicion_x,
+        posicion_y: req.body.posicion_y,
         planta: req.body.planta,
-        capacidad: req.body.capacidad
+        capacidad: req.body.capacidad,
+        estado: req.estado,
     };
     Mesas.update(mesa, {
         where: {
             id: id
         }
     }).then(data => {
-        res.send(data);
+        Mesas.findByPk(id)
+            .then(data => {
+                res.send(data);
+            })
     })
-    .catch(err => {
-        res.status(500).send({
-            message: "Error al actualizar mesas con id=" + id + err
+        .catch(err => {
+            console.log(err);
+
+            // if is a validation error
+            if (err.name === 'SequelizeValidationError') {
+                return res.status(400).json({
+                    message: err.errors.map(e => e.message)
+                })
+            } //other errors
+            else res.status(500).send({
+                message: ["Error al actualizar mesas con id=" + id]
+            });
         });
-    });
 };
