@@ -9,6 +9,9 @@ module.exports = (sequelize, Sequelize) => {
                 deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
             }
         },
+        fecha: {
+            type: Sequelize.DATEONLY
+        },
         id: {
             type: Sequelize.BIGINT,
             primaryKey: true,
