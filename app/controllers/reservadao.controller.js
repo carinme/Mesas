@@ -1,4 +1,5 @@
 const db = require("../models");
+const Sequelize = require('sequelize')
 const Reservas = db.Reservas;
 const Mesas = db.Mesas;
 const Hora_Reserva = db.Horas_Reservas;
@@ -93,31 +94,22 @@ exports.findMesasLibres = (req, res) => {
     console.log(horas.map(h => h.hora_inicio));
     var arr = [];
     Mesas.findAll({
-        where: {
-            [Op.and]:
-                [{ restaurante_id: restaurante_id },
+        //TODO fix the QUERY
+        attributes: {
+            include: [
+                [
+                    // Note the wrapping parentheses in the call below!
+                    Sequelize.literal(`(SELECT COUNT(*) FROM "Reservas" r 
+                        WHERE r."mesa_id" = "Mesa".id AND r."restaurante_id" = 1 and 
+                        (SELECT COUNT(*) FROM "Horas_Reservas" h
+                        WHERE 
+                        r.id = h.reserva_id
+                        AND h."fecha" = '2022-05-29' 
+                        AND h."hora_inicio" IN (16)) = 1)`),
+                    'count'
                 ]
+            ]
         },
-        include: [{
-            required: true,
-            model: Reservas,
-            where: {
-                restaurante_id: restaurante_id,
-                '$Horas_Reservas.hora_inicio$': { [Op.notIn]: horas.map(h => h.hora_inicio) },
-            },
-            include: [{
-                required: true,
-                model: Hora_Reserva,
-                as: "Horas_Reservas",
-                where: {
-                    fecha: fecha,
-                    hora_inicio: {
-                        [Op.notIn]:horas.map(h => h.hora_inicio)
-                    }
-                }
-        }]
-
-    }]
     })
         .then(data => {
             res.status(200).send(data);
