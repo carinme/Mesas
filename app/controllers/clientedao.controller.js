@@ -5,7 +5,7 @@ exports.create = (req, res) => {
     // Validate request
     if (!req.body.cedula || !req.body.nombre || !req.body.apellido) {
         res.status(400).send({
-            message: "Debe completar todos los campos!"
+            message: ["Debe completar todos los campos!"]
         });
         return;
     }
@@ -42,7 +42,7 @@ exports.findOne = (req, res) => {
         })
         .catch(err => {
             res.status(500).send({
-                message: `Error al obtener cliente con id ${id}`
+                message: [`Error al obtener cliente con id ${id}`]
             });
         });
 };
@@ -57,7 +57,7 @@ exports.findAll = (req, res) => {
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Ocurrio un error al obtener los clientes."
+                    [err.message || "Ocurrio un error al obtener los clientes."]
             });
         });
 };
@@ -77,7 +77,7 @@ exports.findCI = (req, res) => {
         })
         .catch(err => {
             res.status(500).send({
-                message: `Error al obtener cliente con cedula ${cedula}`
+                message: [`Error al obtener cliente con cedula ${cedula}`]
             });
         });
 };

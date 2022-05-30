@@ -116,7 +116,7 @@ exports.findMesasLibres = (req, res) => {
         .catch(err => {
             console.log(err);
             res.status(500).send({
-                message: "Error al obtener mesas " + err
+                message: ["Error al obtener mesas " + err]
             });
         });
 };
@@ -155,7 +155,7 @@ exports.getReservas = (req, res) => {
             ]
         }).catch(err => {
             res.status(500).send({
-                message: "Error al obtener reserva " + err
+                message: ["Error al obtener reserva " + err]
             });
         }).then(data => { res.status(200).send(data); });
     }
