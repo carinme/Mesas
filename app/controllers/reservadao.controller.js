@@ -88,10 +88,12 @@ async function findHorariosOcupadosByMesa(mesa_id, restaurante_id, fecha, horas)
 }
 
 exports.findMesasLibres = (req, res) => {
-    const restaurante_id = req.params.restaurante_id;
+    const restaurante_id = req.body.restaurante_id;
     const fecha = req.body.fecha;
     const horas = req.body.horas;
+    console.log(fecha);
     console.log(horas.map(h => h.hora_inicio));
+    console.log("\n\n\nMIRAR" + req.params + "\n\n\n");
     var arr = [];
     Mesas.findAll({
         attributes: {
@@ -99,7 +101,7 @@ exports.findMesasLibres = (req, res) => {
                 [
                     // Note the wrapping parentheses in the call below!
                     Sequelize.literal(`(SELECT COUNT(*) FROM "Reservas" r 
-                        WHERE r."mesa_id" = "Mesa".id AND r."restaurante_id" = 1 and 
+                        WHERE r."mesa_id" = "Mesa".id AND r."restaurante_id" = ${restaurante_id} and 
                         (SELECT COUNT(*) FROM "Horas_Reservas" h
                         WHERE 
                         r.id = h.reserva_id
