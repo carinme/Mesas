@@ -111,6 +111,9 @@ exports.findMesasLibres = (req, res) => {
                 ]
             ],
         },
+        where: {
+            'restaurante_id': restaurante_id
+        }
     })
         .then(data => {
             res.status(200).send(data);
