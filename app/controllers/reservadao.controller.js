@@ -94,7 +94,6 @@ exports.findMesasLibres = (req, res) => {
     console.log(horas.map(h => h.hora_inicio));
     var arr = [];
     Mesas.findAll({
-        //TODO fix the QUERY
         attributes: {
             include: [
                 [
@@ -104,11 +103,11 @@ exports.findMesasLibres = (req, res) => {
                         (SELECT COUNT(*) FROM "Horas_Reservas" h
                         WHERE 
                         r.id = h.reserva_id
-                        AND h."fecha" = '2022-05-29' 
-                        AND h."hora_inicio" IN (16)) = 1)`),
+                        AND h."fecha" = '${fecha}' 
+                        AND h."hora_inicio" IN (${horas.map(h => h.hora_inicio)})) >= 1)`),
                     'count'
                 ]
-            ]
+            ],
         },
     })
         .then(data => {
