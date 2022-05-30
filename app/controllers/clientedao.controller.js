@@ -72,7 +72,7 @@ exports.findCI = (req, res) => {
             if(data.length != 0){
                 res.status(200).send(data);
             }else{
-                res.status(404).send(data);
+                res.status(204).send(data);
             }
         })
         .catch(err => {
