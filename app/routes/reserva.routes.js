@@ -3,7 +3,7 @@ module.exports = app => {
     var router = require("express").Router();
     router.post("/", reserva.create);
     router.get("/:id", reserva.findOne);
-    //router.get("/mesasLibres/:restaurante_id", reserva.findMesasLibres)
+    router.post("/mesasLibres/", reserva.findMesasLibres)
     router.get("/:restaurante_id/:fecha/", reserva.getReservas)
     router.get("/:restaurante_id/:fecha/:cliente_id/", reserva.getReservas)
     

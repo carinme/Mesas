@@ -28,7 +28,7 @@ exports.create = (req, res) => {
 
             res.status(500).send({
             message:
-            err.message || "Ha ocurrido un error al crear el producto."
+            [err.message || "Ha ocurrido un error al crear el producto."]
         });
 
     });
@@ -46,7 +46,7 @@ exports.findOne = (req, res) => {
         .catch(err => {
         res.status(500).send({
 
-            message: "Error al obtener el producto con id=" + id
+            message: ["Error al obtener el producto con id=" + id]
 
         });
 
@@ -74,7 +74,7 @@ exports.findAll = (req, res) => {
 
         message:
 
-        err.message || "Ocurrio un error al obtener los productos."
+        [err.message || "Ocurrio un error al obtener los productos."]
 
         });
 

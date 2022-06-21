@@ -1,4 +1,5 @@
 const db = require("../models");
+const Sequelize = require('sequelize')
 const Reservas = db.Reservas;
 const Mesas = db.Mesas;
 const Hora_Reserva = db.Horas_Reservas;
@@ -87,37 +88,32 @@ async function findHorariosOcupadosByMesa(mesa_id, restaurante_id, fecha, horas)
 }
 
 exports.findMesasLibres = (req, res) => {
-    const restaurante_id = req.params.restaurante_id;
+    const restaurante_id = req.body.restaurante_id;
     const fecha = req.body.fecha;
     const horas = req.body.horas;
+    console.log(fecha);
     console.log(horas.map(h => h.hora_inicio));
+    console.log("\n\n\nMIRAR" + req.params + "\n\n\n");
     var arr = [];
     Mesas.findAll({
-        where: {
-            [Op.and]:
-                [{ restaurante_id: restaurante_id },
+        attributes: {
+            include: [
+                [
+                    // Note the wrapping parentheses in the call below!
+                    Sequelize.literal(`(SELECT COUNT(*) FROM "Reservas" r 
+                        WHERE r."mesa_id" = "Mesa".id AND r."restaurante_id" = ${restaurante_id} and 
+                        (SELECT COUNT(*) FROM "Horas_Reservas" h
+                        WHERE 
+                        r.id = h.reserva_id
+                        AND h."fecha" = '${fecha}' 
+                        AND h."hora_inicio" IN (${horas.map(h => h.hora_inicio)})) >= 1)`),
+                    'count'
                 ]
+            ],
         },
-        include: [{
-            required: true,
-            model: Reservas,
-            where: {
-                restaurante_id: restaurante_id,
-                '$Horas_Reservas.hora_inicio$': { [Op.notIn]: horas.map(h => h.hora_inicio) },
-            },
-            include: [{
-                required: true,
-                model: Hora_Reserva,
-                as: "Horas_Reservas",
-                where: {
-                    fecha: fecha,
-                    hora_inicio: {
-                        [Op.notIn]:horas.map(h => h.hora_inicio)
-                    }
-                }
-        }]
-
-    }]
+        where: {
+            'restaurante_id': restaurante_id
+        }
     })
         .then(data => {
             res.status(200).send(data);
@@ -125,7 +121,7 @@ exports.findMesasLibres = (req, res) => {
         .catch(err => {
             console.log(err);
             res.status(500).send({
-                message: "Error al obtener mesas " + err
+                message: ["Error al obtener mesas " + err]
             });
         });
 };
@@ -164,7 +160,7 @@ exports.getReservas = (req, res) => {
             ]
         }).catch(err => {
             res.status(500).send({
-                message: "Error al obtener reserva " + err
+                message: ["Error al obtener reserva " + err]
             });
         }).then(data => { res.status(200).send(data); });
     }

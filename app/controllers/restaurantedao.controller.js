@@ -5,7 +5,7 @@ exports.create = (req, res) => {
     // Validate request
     if (!req.body.nombre || !req.body.direccion) {
         res.status(400).send({
-            message: "Datos incompletos"
+            message: ["Datos incompletos"]
         });
         return;
     }
@@ -22,7 +22,7 @@ exports.create = (req, res) => {
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Ha ocurrido un error al crear el restaurante."
+                    [err.message || "Ha ocurrido un error al crear el restaurante."]
             });
         });
 };
@@ -34,7 +34,7 @@ exports.destroy = (req, res) => {
     }).catch(err => {
         res.status(500).send({
             message:
-                err.message || "Ha ocurrido un error al crear el restaurante."
+                [err.message || "Ha ocurrido un error al crear el restaurante."]
         });
     });
 }
@@ -61,7 +61,7 @@ exports.update = (req, res) => {
                 err => {
                     res.status(500).send({
                         message:
-                            err.message || "Ha ocurrido un error. No se ha podido actualizar el restaurante."
+                            [err.message || "Ha ocurrido un error. No se ha podido actualizar el restaurante."]
                     });
                 });
 }
@@ -75,7 +75,7 @@ exports.findOne = (req, res) => {
         })
         .catch(err => {
             res.status(500).send({
-                message: "Error al obtener restaurante con id=" + id
+                message: ["Error al obtener restaurante con id=" + id]
             });
         });
 };
@@ -90,7 +90,7 @@ exports.findAll = (req, res) => {
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Ocurrio un error al obtener los restaurantes."
+                    [err.message || "Ocurrio un error al obtener los restaurantes."]
             });
         });
 };
