@@ -1,91 +1,75 @@
-const db = require('../models');
-const Categoria = db.Categoria;
-
-exports.create = async (req, res) => {
-    //Validar el request
-    if(!req.body.nombre){
+const db = require("../models");
+const Categorias = db.Categorias;
+const Op = db.Sequelize.Op;
+exports.create = (req, res) => {
+    // Validate request
+    if (!req.body.nombre) {
         res.status(400).send({
-            message: "Debe enviar el nombre de la categoria"
+            message: "Datos incompletos"
         });
-    }else{
-        const categoria = req.body;
-        try {
-            const data = await Categoria.create(categoria);
-            res.send(data);
-        } catch (error) {
-            res.status(500).send({
-                message: error.message || "Ha ocurrido un error al crear la categoria."
-            });
-        }
+        return;
     }
-}
-
-exports.findAll=(req,res) => {
-    Categoria.findAll()
-        .then(data =>{
-            res.status(200).send(data);
+    // crea una categoria
+    const categoria = {
+        nombre: req.body.nombre
+    };
+    // Guardamos a la base de datos
+    Categorias.create(categoria)
+        .then(data => {
+            res.send(data);
         })
-        .catch(err =>{
+        .catch(err => {
             res.status(500).send({
-                message:"Error en el servidor"
+                message:
+                    err.message || "Ha ocurrido un error al crear una categoria."
             });
         });
 };
 
-exports.findOne = async(req, res) =>{
-    const {id} = req.params;
-    try {
-        const data = await Categoria.findByPk(id);
-        if(data){
+exports.findOne = (req, res) => {
+    const id = req.params.id;
+    Categorias.findByPk(id)
+        .then(data => {
             res.send(data);
-        }else{
-            res.status(404).send({
-                message: "No se encontro la categoria con id=" + id
-            });
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            message: "Error al obtener categoria con id=" + id
-        });
-    }
-}
-
-exports.update = async(req, res) => {
-    //Validar el request
-    if(!req.body.nombre ){
-        res.status(400).send({
-            message: "Debe enviar el nuevo nombre de la categoria"
         })
-    }
-    const {id, nombre} = req.body;
-    try {
-        const categoria = await Categoria.findByPk(id);
-        if(!categoria){
-            res.status(404).send({
-                message: "No se encontro la Categoria con id=" + id
+        .catch(err => {
+            res.status(500).send({
+                message: "Error al obtener categoria con id=" + id
             });
-        }
-        else{
-            categoria.nombre = nombre;
-            const data = await categoria.save();
-            res.send(data);
-        }
-    } catch (error) {
-        res.status(500).send({
-            message: error.message || "Ha ocurrido un error al actualizar la categoria."
         });
-    }
-}
-exports.delete = async(req, res) =>{
-    const {id} = req.params;
-    try {
-        const categoria  = await Categoria.findByPk(id);
-        const data = await categoria.destroy();
+};
+
+exports.delete = (req,res) => {
+    const id = req.params.id;
+    Categorias.destroy({
+        where: {
+            id: id
+        }
+    }).then(data => {
         res.send(data);
-    } catch (error) {
+    })
+    .catch(err => {
         res.status(500).send({
             message: "Error al eliminar categoria con id=" + id
         });
-    }
-}
+    });   
+};
+
+exports.update = (req,res) => {
+    const id = req.params.id;
+    const categoria = {
+        nombre: req.body.nombre
+    };
+    Categorias.update(categoria, {
+        where: {
+            id: id
+        }
+    }).then(data => {
+        res.send(data);
+    })
+    .catch(err => {
+        res.status(500).send({
+            message: "Error al actualizar Categorias con id=" + id + err
+        });
+    });
+};
