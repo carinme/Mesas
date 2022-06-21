@@ -14,18 +14,20 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
 const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
+//Relaciones del TP 2doParcial - BackEnd
 db.Restaurantes = require("./restaurante.model.js")(sequelize, Sequelize);
 db.Clientes = require("./cliente.model.js")(sequelize, Sequelize);
 db.Mesas = require("./mesa.models.js")(sequelize, Sequelize);
 db.Reservas = require("./reserva.model.js")(sequelize, Sequelize);
 db.Horas_Reservas = require("./horas_reserva.model.js")(sequelize, Sequelize);
 
-///Relaciones del TP del Final
+///Relaciones del TP 1erFinal - BackEnd
 db.Categorias = require("./categoria.model.js")(sequelize, Sequelize);
 db.Productos = require("./producto.model.js")(sequelize,Sequelize);
-db.Consumo=require("./consumo.models.js")(sequelize, Sequelize);
-db.Consumo_Cabecera = require("./consumo_cabecera.model.js")(sequelize, Sequelize);
-//db.DetalleConsumo=require("./detalleConsumo.models.js")(sequelize, Sequelize);
+db.Consumos=require("./consumo.models.js")(sequelize, Sequelize);
+db.Detalles = require("./detalle_consumo.model.js")(sequelize, Sequelize);
+module.exports = db;
+
 
 db.Restaurantes.hasMany(db.Mesas, {
   foreignKey: 'restaurante_id',
@@ -86,6 +88,4 @@ db.Reservas.belongsTo(db.Clientes, {
   onDelete: 'CASCADE',
 });
 
-//db.Consumos = require("./consumo.model.js")(sequelize, Sequelize);
-//db.Detalles = require("./detalle_consumo.model.js")(sequelize, Sequelize);
-module.exports = db;
+
