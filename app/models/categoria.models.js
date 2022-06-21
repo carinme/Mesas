@@ -1,16 +1,13 @@
-//const { sequelize, Sequelize } = require(".");
-
-models.exports = ( sequelize, Sequelize) => {
-    
-    const Categoria = sequelize.define("Categoria", {
-        nombre_categoria: {
-            type: Sequelize.STRING
-        },
-        id_Categoria: {
-            type: Sequelize.BIGINT,
+module.exports = (sequelize, Sequelize) => {
+    const Categoria = sequelize.define("categoria", {
+        id: {
+            type:Sequelize.BIGINT,
             primaryKey: true,
             autoIncrement: true
+        },
+        nombre: {
+            type: Sequelize.STRING
         }
     });
     return Categoria;
-};
+}
