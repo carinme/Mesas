@@ -1,200 +1,187 @@
-const db = require('../models');
-const db_s=require("../models/index");
-const sequelize=db_s.sequelize;
-
-const Consumo = db.Consumo;
-const DetalleConsumo= db.DetalleConsumo
-const  Mesa= db.Mesa
-const  Producto = db.Producto
-
-//funciones normales
-
-//funcion que devulve todos los detalles de una cabecera
-const getDetallesByCabecera= async  (id_cabecera)=>{
-    let detalles
-    if(id_cabecera){
-        let consumo= await Consumo.findByPk(id_cabecera);
-        if(consumo){ //el consumo Existe
-            detalles= await  DetalleConsumo.findAll({
-                where:{
-                    id_cabecera:id_cabecera
-                }
-            });
-        }
-    }
-    return detalles
-}
-
-//funcion que devuelve true o false de acuerdo si una mesa esta ocupada
-const isTaken= async (id_mesa)=> {
-    consumoMesa= await Consumo.findOne({
-        where:{
-            id_mesa:id_mesa,
-            estado:'abierto'
-        }
-    });
-    return consumoMesa  ? consumoMesa :  false;
-}
-
-//funcion que actualiza el total del consumo
-
-const  actualizarTotal= async (id_consumo,monto)=>{
-    consumo= await Consumo.findOne(
-        {
-        where:{
-            id:id_consumo
-        }
-    })
-    console.log('Este es el consumo',consumo)
-    consumo.total+=monto;
-    await consumo.save()
-}
-
-
-
-
-//funciones Rest
-exports.create = async (req, res) => {
-    //Validar el request
-    if(!(req.body.id_mesa && req.body.id_cliente)){
+const db = require("../models");
+const Consumos = db.Consumos;
+const Detalles = db.Detalles;
+const Restaurantes = db.Restaurantes;
+const Clientes = db.Clientes;
+const Mesas = db.Mesas;
+const Productos = db.Productos;
+const Op = db.Sequelize.Op;
+exports.create = (req, res) => {
+    // Validate request
+    if (!req.body.id_mesa || !req.body.id_cliente || !req.body.estado || !req.body.horafecha_creacion) {
         res.status(400).send({
-            message: "Debe enviar el id_mesa, y id_cliente"
+            message: "Debe completar todos los campos!"
         });
-    }else{
-        const consumo = req.body;
-        //consumo.fechaCreacion=new Date()
-        try {
-            const data = await Consumo.create(consumo);
-            res.send(data);
-        } catch (error) {
-            res.status(500).send({
-                message: error.message || "Ha ocurrido un error al crear el consumo."
-            });
-        }
+        return;
     }
-}
-
-exports.findAll=(req,res) => {
-    Consumo.findAll()
-        .then(data =>{
-            res.status(200).send(data);
+    // crea un cliente
+    const consumo = {
+        id_mesa: req.body.id_mesa,
+        id_cliente: req.body.id_cliente,
+        estado: req.body.estado,
+        total: req.body.total,
+        horafecha_creacion: req.body.horafecha_creacion
+    };
+    // Guardamos a la base de datos
+    Consumos.create(consumo)
+        .then(data => {
+            res.send(data);
         })
-        .catch(err =>{
+        .catch(err => {
             res.status(500).send({
-                message:"Error en el servidor"
+                message:
+                    err.message || "Ha ocurrido un error al crear el consumo."
             });
         });
 };
 
-exports.findOne = async(req, res) =>{
-    const {id} = req.params;
-    try {
-        const data = await Consumo.findByPk(id);
-        if(data){
-            res.send(data);
-        }else{
-            res.status(404).send({
-                message: "No se encontro el Consumo con id=" + id
-            });
+exports.update = (req,res) => {
+    const id = req.params.id;
+    const consumo = {
+        id_mesa: req.body.id_mesa,
+        id_cliente: req.body.id_cliente,
+        estado: req.body.estado,
+        total: req.body.total,
+        horafecha_creacion: req.body.horafecha_creacion,
+        horafecha_cierre: req.body.horafecha_cierre
+    };
+    Consumos.update(consumo, {
+        where: {
+            id: id
         }
-    } catch (error) {
-        console.log(error);
+    }).then(data => {
+        res.send(data);
+    })
+    .catch(err => {
         res.status(500).send({
-            message: "Error al obtener el Consumo con id=" + id
+            message: "Error al actualizar Consumo con id=" + id + err
         });
-    }
-}
+    });
+};
 
-exports.update = async(req, res) => {
-    //Validar el request
-    if(!(req.body.id_cliente) ){
-        res.status(400).send({
-            message: "Debe enviar el nuevo id del Cliente"
+exports.findAll = (req, res) => {
+    var condition = null;
+
+    Consumos.findAll({ where: condition })
+        .then(data => {
+            res.send(data);
         })
-    }
-
-    const {id, id_cliente} = req.body;
-    try {
-        const consumo = await Consumo.findByPk(id);
-        if(!consumo){
-            res.status(404).send({
-                message: "No se encontro el Consumo con id=" + id
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Ocurrio un error al obtener los consumos."
             });
-        }
-        else{
-            consumo.id_cliente = id_cliente;
-            const data = await consumo.save();
-            res.send(data);
-        }
-    } catch (error) {
-        res.status(500).send({
-            message: error.message || "Ha ocurrido un error al actualizar el Consumo."
         });
-    }
+};
+
+exports.findOcupado = (req, res) => {
+
+    Consumos.belongsTo(Clientes, { foreignKey: "id_cliente" });
+
+    const id_mesa = req.params.id;
+    Consumos.findAll({where:
+        {
+            [Op.and]:
+                [{ id_mesa: id_mesa },
+                { estado: "Abierto" },
+                ]
+        },
+        include: [{
+            model: Clientes,
+            as: "Cliente"
+        }]
+    }).then(data => {
+        res.send(data);
+    })
+    .catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Ocurrio un error al obtener los consumos."
+        });
+    });
 }
 
-exports.getDetalles=  async (req, res)=>{
-    const {id_cosumo}= req.params;
-    try{
-        detalles= await DetalleConsumo.findAll({ //obtengo  los detalles de la messa
-            where:{
-                id_consumo:id_cosumo
+exports.findIDCliente = (req, res) => {
+    const id_cliente = req.params.id;
+    Consumos.findAll({where: 
+            {
+                id_cliente: id_cliente
+            }})
+        .then(data => {
+            if(data.length != 0){
+                res.status(200).send(data);
+            }else{
+                res.status(404).send(data);
             }
         })
-        res.send(detalles)
-    }catch (error){
+        .catch(err => {
             res.status(500).send({
-                message: error.message || "Ha ocurrido un error al Obtener Detalles."
+                message: `Error al obtener consumo con id de cliente ${id_cliente}`
             });
-    }
+        });
+};
 
-}
 
-exports.addDetalles =  async (req, res)=>{
-    if( !(req.body.id_consumo && req.body.id_producto && req.body.cantidad ) ){
-        res.status(400).send({
-            message: "Debe enviar el id_cabecera , id_mesa, cantidad"
+exports.factura = async (req,res) => {
+    const id = req.params.id;
+    const pdf = require('html-pdf');
+    try{
+        const consumo = await Consumos.findByPk(id);
+        const detalles = await Detalles.findAll({where: {id_cabecera: id}});
+        const cliente = await Clientes.findByPk(consumo.id_cliente);
+        const mesa = await Mesas.findByPk(consumo.id_mesa);
+        const restaurante = await Restaurantes.findByPk(mesa.restaurante_id);
+        for (let i = 0; i < detalles.length; i++){
+            let producto = await Productos.findByPk(detalles[i].dataValues.id_producto)
+            detalles[i].dataValues.producto = producto;
+        }
+        let  date = consumo.horafecha_cierre;
+        let fecha = "";
+        if (date){
+            fecha =  ("00" + date.getDate()).slice(-2) + "/" +
+            ("00" + (date.getMonth() + 1)).slice(-2) + "/" +
+            date.getFullYear() + " " +
+            ("00" + date.getHours()).slice(-2) + ":" +
+            ("00" + date.getMinutes()).slice(-2);
+        }
+        let html =  `
+            <div>
+                <center>
+                <h1>${restaurante.nombre}</h1>
+                <span>${restaurante.direccion}</span>
+                <center/>
+                <hr/>
+                <center>
+                <span>Cliente: ${cliente.nombre} ${cliente.apellido}</span><br/>
+                <span>Documento: ${cliente.cedula}</span><br/>
+                <span>${fecha}<span/>
+                <center/>
+                <hr/>
+                <center>
+                <span> ${mesa.nombre}</span><br/>
+                <h5>Detalles</h5>
+                <center/>
+                ${
+                    detalles.reduce((acc,cur)=>{
+                        let result = "<center>" + acc + "<br/>";
+                        result += "<h6>" + cur.dataValues.producto.dataValues.nombre + "</h6>";
+                        result += "Cantidad: " + cur.dataValues.cantidad + "<br/>";
+                        result += "Costo Unitario: Gs. " + cur.dataValues.producto.dataValues.precio + "<br/>";
+                        result += "Costo total: Gs. " + cur.dataValues.producto.dataValues.precio * cur.dataValues.cantidad + "<br/>";
+                        result += "<center/><hr/>"
+                        return result;
+                    },"")
+                }
+                <center><span>Total: Gs. ${consumo.total}</span><center/> 
+            </div>
+         `
+        pdf.create(html,{"width":"8in"}).toStream((err,stream)=>{
+            res.setHeader('Content-Type','application/pdf');
+            res.setHeader('Content-Disposition','attachment; filename=ticket.pdf');
+            stream.pipe(res);
         });
     }
-    else{
-        const detalle = req.body;
-        try {
-            const data = await DetalleConsumo.create(detalle);
-            producto = await Producto.findByPk(detalle.id_producto)
-            //console.log(producto)
-            await actualizarTotal(data.id_consumo,producto.precio * data.cantidad) //por cada detalle actualiamos el total de consumo
-            res.send(data);
-        } catch (error) {
-            res.status(500).send({
-                message: error.message || "Ha ocurrido un error al agregar el detalle."
-            });
-        }
+    catch(e){
+        console.log(e);
     }
-}
-
-exports.cerrarMesa= async (req,res)=>{
-    const {id_consumo} = req.params
-    consumo=await Consumo.findByPk(id_consumo);
-    if(consumo){
-        consumo.estado="cerrado"
-        consumo.fechaCierre= new Date()
-        data= await  consumo.save()
-        res.send(data)
-    }else{
-        res.status(400).send(
-            {message: "No existe ese id_consumo"}
-        )
-    }
-
-}
-exports.isTakenRest=async  (req, res)=>{
-    const {id_mesa}=req.params
-    data=await isTaken(id_mesa)
-    if(data){
-        res.send(data)
-    }
-    else{
-        res.send({})
-    }
-
 }
