@@ -1,13 +1,21 @@
 module.exports = (sequelize, Sequelize) => {
-
+    const Categoria = require("./categoria.model.js")(sequelize, Sequelize);
     const Producto = sequelize.define("Producto", {
-        nombre_producto: {
+        categoria_id: {
+            type: Sequelize.INTEGER,
+            references: {
+                model: Categoria,
+                key: 'id',
+                deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
+            }
+        },
+        nombre: {
             type: Sequelize.STRING
         },
         precio: {
-            type: Sequelize.DECIMAL
+            type: Sequelize.INTEGER
         },
-        id_Producto: {
+        id: {
             type: Sequelize.BIGINT,
             primaryKey: true,
             autoIncrement: true

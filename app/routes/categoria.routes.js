@@ -1,10 +1,9 @@
-module.exports = app =>{
-    const categoriaDao = require('../controllers/categoriadao.controller');
-    const router = require('express').Router();
-    router.get("/", categoriaDao.findAll);
-    router.get("/:id", categoriaDao.findOne);
-    router.post('/', categoriaDao.create);
-    router.put('/', categoriaDao.update);
-    router.delete('/:id', categoriaDao.delete);
+module.exports = app => {
+    const categoria = require("../controllers/categoriadao.controller.js");
+    var router = require("express").Router();
+    router.post("/", categoria.create);
+    router.get("/:id", categoria.findOne);
+    router.delete("/:id", categoria.delete);
+    router.put("/:id", categoria.update);
     app.use('/api/categoria', router);
-}
+};

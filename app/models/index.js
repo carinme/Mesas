@@ -21,8 +21,11 @@ db.Reservas = require("./reserva.model.js")(sequelize, Sequelize);
 db.Horas_Reservas = require("./horas_reserva.model.js")(sequelize, Sequelize);
 
 ///Relaciones del TP del Final
-db.Categoria = require("./categoria.models.js")(sequelize, Sequelize);
+db.Categorias = require("./categoria.model.js")(sequelize, Sequelize);
 db.Productos = require("./producto.model.js")(sequelize,Sequelize);
+db.Consumo=require("./consumo.models.js")(sequelize, Sequelize);
+db.Consumo_Cabecera = require("./consumo_cabecera.model.js")(sequelize, Sequelize);
+//db.DetalleConsumo=require("./detalleConsumo.models.js")(sequelize, Sequelize);
 
 db.Restaurantes.hasMany(db.Mesas, {
   foreignKey: 'restaurante_id',
