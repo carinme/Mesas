@@ -23,10 +23,10 @@ require("./app/routes/mesa.routes")(app);
 require("./app/routes/restaurante.routes")(app);
 require("./app/routes/cliente.routes")(app);
 require("./app/routes/reserva.routes")(app);
-//require("./app/routes/consumo.routes")(app);
-//require("./app/routes/detalle.routes")(app);
-//require("./app/routes/producto.routes")(app);
-//require("./app/routes/categoria.routes")(app);
+require("./app/routes/consumo.routes")(app);
+require("./app/routes/detalle.routes")(app);
+require("./app/routes/producto.routes")(app);
+require("./app/routes/categoria.routes")(app);
 // set port, listen for requests
 const PORT = process.env.PORT || 9091;
 app.listen(PORT, () => {

@@ -54,6 +54,11 @@ db.Clientes.hasMany(db.Reservas, {
   sourceKey: 'id',
 });
 
+db.Consumos.hasMany(db.Detalles, {
+  foreignKey: 'id_cabecera',
+  sourceKey: 'id',
+});
+
 
 
 
@@ -85,6 +90,12 @@ db.Reservas.belongsTo(db.Mesas, {
 db.Reservas.belongsTo(db.Clientes, {
   foreignKey: "cliente_id",
   targetKey: 'id',
+  onDelete: 'CASCADE',
+});
+
+db.Detalles.belongsTo(db.Consumos, {
+  foreignKey: 'id_cabecera',
+  sourceKey: 'id',
   onDelete: 'CASCADE',
 });
 

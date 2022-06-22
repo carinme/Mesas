@@ -45,6 +45,22 @@ exports.findAll = (req, res) => {
         });
 };
 
+exports.delete = (req,res) => {
+    const id = req.params.id;
+    Detalles.destroy({
+        where: {
+            id: id
+        }
+    }).then(data => {
+        res.status(200).send({ message: `Detalle con id: ${id} eliminado exitosamente` });
+    })
+        .catch(err => {
+            res.status(500).send({
+                message: "Error el detalle con id=" + id
+            });
+        });
+};
+
 exports.findIDCabecera = (req, res) => {
     Detalles.belongsTo(Productos, { foreignKey: "id_producto" });
 

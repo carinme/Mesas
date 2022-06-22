@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const Consumo = require("./consumo.model.js")(sequelize, Sequelize);
+    const Consumo = require("./consumo.models.js")(sequelize, Sequelize);
     const Producto = require("./producto.model.js")(sequelize, Sequelize);
     const Detalle = sequelize.define("Detalle", {
         id_cabecera: {

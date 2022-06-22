@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
     const Cliente = require("./cliente.model.js")(sequelize, Sequelize);
-    const Mesa = require("./mesa.model.js")(sequelize, Sequelize);
+    const Mesa = require("./mesa.models.js")(sequelize, Sequelize);
     const Consumo = sequelize.define("Consumo", {
         id_cliente: {
             type: Sequelize.INTEGER,
